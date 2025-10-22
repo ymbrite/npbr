@@ -6,7 +6,8 @@
 
 ## Demo
 
-- [zangwei.dev](https://www.zangwei.dev/)
+- This repo on Vercel: [https://nextjs-portfolio-blog-research.vercel.app/](https://nextjs-portfolio-blog-research.vercel.app/)
+- My portfolio: [zangwei.dev](https://www.zangwei.dev/)
 
 ## Features
 
@@ -64,6 +65,6 @@ To create blog posts, add markdown (MDX) files to the [content/](./content) dire
 
 The default portfolio information and blog articles are provided as examples to help you get started quickly.
 
-The simplest way to deploy your portfolio is via [Vercel](https://vercel.com/): just click the deploy button under the title. The free Vercel plan is suitable for almost all personal use cases.
+The simplest way to deploy your portfolio is via [Vercel](https://vercel.com/): just click [deploy](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzhengzangw%2Fnextjs-portfolio-blog-research). The free Vercel plan is suitable for almost all personal use cases.
 
 More details can be found in the [Documentation](https://nextjs-boilerplate.com/).
