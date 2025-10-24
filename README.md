@@ -8,6 +8,7 @@
 
 - This repo on Vercel: [https://nextjs-portfolio-blog-research.vercel.app/](https://nextjs-portfolio-blog-research.vercel.app/)
 - My portfolio: [zangwei.dev](https://www.zangwei.dev/)
+- [mengjunyi.com](https://mengjunyi.com/)
 
 ## Features
 
