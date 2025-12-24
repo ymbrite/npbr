@@ -1,11 +1,11 @@
 {
-  "name": "porfolio",
+  "name": "nextjs-portfolio-blog-research",
   "version": "1.1.0",
   "private": true,
   "author": {
     "name": "Zangwei Zheng",
     "url": "https://www.zangwei.dev",
-    "repository": "https://github.com/zangweizheng/portfolio"
+    "repository": "https://github.com/zhengzangw/nextjs-portfolio-blog-research"
   },
   "scripts": {
     "dev": "next dev",
