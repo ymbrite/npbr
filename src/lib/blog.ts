@@ -77,7 +77,7 @@ function calculateReadingTime(content: string, locale: string): number {
 
 export async function markdownToHTML(markdown: string) {
   const p = await unified()
-    .use(remarkParse)
+    .use(remarkParse, { sanitize: false })
     .use(remarkGfm)
     .use(remarkMath)
     .use(remarkRehype)
