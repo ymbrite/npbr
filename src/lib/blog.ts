@@ -4,8 +4,8 @@ import path from "path";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
+import rehypeRaw from "rehype-raw";
 import rehypeStringify from "rehype-stringify";
-import rehypeRaw from 'rehype-raw';
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import remarkParse from "remark-parse";
@@ -78,12 +78,14 @@ function calculateReadingTime(content: string, locale: string): number {
 
 export async function markdownToHTML(markdown: string) {
   const p = await unified()
-    .use(remarkParse, { sanitize: false })
+    .use(remarkParse)
     .use(remarkGfm)
     .use(remarkMath)
     .use(remarkRehype)
     .use(rehypeSlug)
     .use(rehypeKatex)
+    .use(rehypeRaw) // 这一步至关重要，它将 Markdown 中的 HTML 字符串转换为节点
+    .use(rehypeStringify)
     .use(rehypePrettyCode, {
       // https://rehype-pretty.pages.dev/#usage
       theme: {
