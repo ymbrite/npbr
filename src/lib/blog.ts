@@ -11,16 +11,13 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 
-// Reading speed constants (words/characters per minute)
-const READING_SPEED_EN = 225; // English: words per minute
-const READING_SPEED_ZH = 350; // Chinese: characters per minute
+const MATH_UNICODE_REPLACEMENTS: Array<[RegExp, string]> = [[/𝜇/gu, "\\mu"]];
 
 // Define the expected metadata structure
 interface BlogPostMetadata {
   title: string;
   date: string;
   summary: string;
-  readingTime?: number; // Reading time in minutes
   [key: string]: unknown;
 }
 
@@ -36,53 +33,19 @@ function getMDXFiles(dir: string) {
   return fs.readdirSync(dir).filter((file) => path.extname(file) === ".mdx");
 }
 
-/**
- * Calculate reading time based on content and locale
- * @param content - The markdown content (without frontmatter)
- * @param locale - The locale ('en' or 'zh')
- * @returns Reading time in minutes (rounded up)
- */
-function calculateReadingTime(content: string, locale: string): number {
-  // Remove markdown syntax, code blocks, and extra whitespace
-  const text = content
-    .replace(/```[\s\S]*?```/g, "") // Remove code blocks
-    .replace(/`[^`]+`/g, "") // Remove inline code
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Replace links with link text
-    .replace(/[#*_~`]/g, "") // Remove markdown formatting characters
-    .replace(/\n+/g, " ") // Replace newlines with spaces
-    .trim();
-
-  if (locale === "zh") {
-    // Count Chinese characters (CJK unified ideographs)
-    const chineseCharPattern = /[\u4e00-\u9fff]/g;
-    const chineseChars = text.match(chineseCharPattern) || [];
-    const chineseCount = chineseChars.length;
-
-    // Count other characters (spaces, punctuation, etc.) as words
-    const otherText = text.replace(chineseCharPattern, "").trim();
-    const otherWords = otherText
-      .split(/\s+/)
-      .filter((w) => w.length > 0).length;
-
-    // Chinese: READING_SPEED_ZH characters per minute
-    // For mixed content, count Chinese chars + English words
-    const totalUnits = chineseCount + otherWords;
-    return Math.max(1, Math.ceil(totalUnits / READING_SPEED_ZH));
-  } else {
-    // English: READING_SPEED_EN words per minute
-    const words = text.split(/\s+/).filter((w) => w.length > 0);
-    return Math.max(1, Math.ceil(words.length / READING_SPEED_EN));
-  }
-}
-
 export async function markdownToHTML(markdown: string) {
+  const normalizedMarkdown = MATH_UNICODE_REPLACEMENTS.reduce(
+    (content, [pattern, replacement]) => content.replace(pattern, replacement),
+    markdown,
+  );
+
   const p = await unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkMath)
     .use(remarkRehype)
     .use(rehypeSlug)
-    .use(rehypeKatex)
+    .use(rehypeKatex, { strict: "ignore" })
     .use(rehypePrettyCode, {
       // https://rehype-pretty.pages.dev/#usage
       theme: {
@@ -92,7 +55,7 @@ export async function markdownToHTML(markdown: string) {
       keepBackground: false,
     })
     .use(rehypeStringify)
-    .process(markdown);
+    .process(normalizedMarkdown);
 
   return p.toString();
 }
@@ -101,7 +64,7 @@ export async function getPost(
   slug: string,
   locale: string = "en",
 ): Promise<BlogPost | null> {
-  const contentDir = locale === "zh" ? "content/blog/zh" : "content/blog/en";
+  const contentDir = locale === "zh" ? "content/zh" : "content";
   const filePath = path.join(contentDir, `${slug}.mdx`);
 
   // Check if file exists
@@ -113,15 +76,11 @@ export async function getPost(
   const { content: rawContent, data: rawMetadata } = matter(source);
   const content = await markdownToHTML(rawContent);
 
-  // Calculate reading time
-  const readingTime = calculateReadingTime(rawContent, locale);
-
   // Ensure required fields exist and type the metadata properly
   const metadata: BlogPostMetadata = {
     title: rawMetadata.title || "",
     date: rawMetadata.date || "",
     summary: rawMetadata.summary || "",
-    readingTime,
     ...rawMetadata,
   };
 
@@ -154,49 +113,16 @@ async function getAllPosts(
 }
 
 export async function getBlogPosts(locale: string = "en"): Promise<BlogPost[]> {
-  try {
-    const contentDir = locale === "zh" ? "content/blog/zh" : "content/blog/en";
-    const posts = await getAllPosts(
-      path.join(process.cwd(), contentDir),
-      locale,
-    );
-    return Array.isArray(posts) ? posts : [];
-  } catch (error) {
-    console.error(`Error getting blog posts for locale ${locale}:`, error);
-    return [];
-  }
+  const contentDir = locale === "zh" ? "content/zh" : "content";
+  return getAllPosts(path.join(process.cwd(), contentDir), locale);
 }
 
 export async function hasChineseVersion(slug: string): Promise<boolean> {
-  const chineseFilePath = path.join("content/blog/zh", `${slug}.mdx`);
+  const chineseFilePath = path.join("content/zh", `${slug}.mdx`);
   return fs.existsSync(chineseFilePath);
 }
 
 export async function hasEnglishVersion(slug: string): Promise<boolean> {
-  const englishFilePath = path.join("content/blog/en", `${slug}.mdx`);
+  const englishFilePath = path.join("content", `${slug}.mdx`);
   return fs.existsSync(englishFilePath);
-}
-
-/**
- * Get all available locales for a blog post slug
- * @param slug - The blog post slug
- * @param locales - Array of all available locales to check
- * @returns Array of locales where the post exists
- */
-export async function getAvailableLocales(
-  slug: string,
-  locales: string[],
-): Promise<string[]> {
-  const availableLocales: string[] = [];
-
-  for (const locale of locales) {
-    // Use the same logic as getPost to determine content directory
-    const contentDir = locale === "zh" ? "content/blog/zh" : "content/blog/en";
-    const filePath = path.join(process.cwd(), contentDir, `${slug}.mdx`);
-    if (fs.existsSync(filePath)) {
-      availableLocales.push(locale);
-    }
-  }
-
-  return availableLocales;
 }

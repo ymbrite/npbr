@@ -1,11 +1,11 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { LanguageToggle } from "@/components/blocks/navbar/language-toggle";
 import { ModeToggle } from "@/components/blocks/navbar/mode-toggle";
-import { Icons } from "@/components/icons";
 import { buttonVariants } from "@/components/ui/button";
 import { Dock, DockIcon } from "@/components/ui/dock";
 import { Separator } from "@/components/ui/separator";
@@ -14,17 +14,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Link as I18nLink } from "@/i18n/routing";
+import { DATA } from "@/data";
 import { cn } from "@/lib/utils";
 
-interface NavbarProps {
-  languageToggleDisabled?: boolean;
-}
-
-export default function Navbar({
-  languageToggleDisabled = false,
-}: NavbarProps) {
-  const t = useTranslations();
+export default function Navbar() {
+  const pathname = usePathname();
+  const isChinesePage = pathname.startsWith("/zh");
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
@@ -40,21 +35,6 @@ export default function Navbar({
     };
   }, []);
 
-  const navbarItems = t.raw("navbar.items") as Array<{
-    href: string;
-    icon: string;
-    label: string;
-  }>;
-
-  const getIconComponent = (iconName: string) => {
-    const iconMap: Record<string, typeof Icons.home> = {
-      home: Icons.home,
-      notebook: Icons.notebook,
-      fileuser: Icons.fileuser,
-    };
-    return iconMap[iconName] || Icons.home;
-  };
-
   return (
     <div
       className={cn(
@@ -63,20 +43,23 @@ export default function Navbar({
     >
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 h-16 w-full backdrop-blur-lg [-webkit-mask-image:linear-gradient(to_top,black,transparent)] md:hidden",
+          "bg-background dark:bg-background fixed inset-x-0 bottom-0 h-16 w-full to-transparent backdrop-blur-lg [-webkit-mask-image:linear-gradient(to_top,black,transparent)] md:top-0",
         )}
       ></div>
       <Dock className="bg-background pointer-events-auto relative z-50 mx-auto flex h-full min-h-full transform-gpu items-center px-1 [box-shadow:0_0_0_1px_rgba(0,0,0,.03),0_2px_4px_rgba(0,0,0,.05),0_12px_24px_rgba(0,0,0,.05)] md:mt-1 dark:[box-shadow:0_-20px_80px_-20px_#ffffff1f_inset] dark:[border:1px_solid_rgba(255,255,255,.1)]">
-        {navbarItems.map((item) => {
-          // Use next-intl Link which automatically handles locale prefixes
-          // With localePrefix: 'as-needed', en routes don't have /en prefix
-          // For static files (e.g., .pdf, .png), use regular <a> tag to avoid routing issues
-          // Otherwise use i18n Link for internal routes
-          const href = item.href;
-          const label = item.label;
-          const IconComponent = getIconComponent(item.icon);
-          const isStaticFile = href.includes(".") && (href.endsWith(".pdf") || href.endsWith(".png") || href.endsWith(".jpg") || href.endsWith(".jpeg"));
-          const LinkComponent = isStaticFile ? "a" : I18nLink;
+        {DATA.navbar.map((item) => {
+          // Adjust href based on current language
+          let href: string = item.href;
+          if (item.href === "/blog") {
+            href = isChinesePage ? "/zh/blog" : "/blog";
+          } else if (item.href === "/") {
+            href = isChinesePage ? "/zh" : "/";
+          }
+          const isStaticFile =
+            href.endsWith(".pdf") ||
+            href.endsWith(".png") ||
+            href.endsWith(".jpg") ||
+            href.endsWith(".jpeg");
 
           return (
             <DockIcon key={item.href}>
@@ -85,39 +68,41 @@ export default function Navbar({
                   {isStaticFile ? (
                     <a
                       href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={cn(
                         buttonVariants({ variant: "ghost", size: "icon" }),
                         "size-12",
                       )}
-                      aria-label={label}
+                      aria-label={item.label}
                     >
-                      <IconComponent className="size-4" />
+                      <item.icon className="size-4" />
                     </a>
                   ) : (
-                    <LinkComponent
+                    <Link
                       href={href}
                       className={cn(
                         buttonVariants({ variant: "ghost", size: "icon" }),
                         "size-12",
                       )}
-                      aria-label={label}
+                      aria-label={item.label}
                     >
-                      <IconComponent className="size-4" />
-                    </LinkComponent>
+                      <item.icon className="size-4" />
+                    </Link>
                   )}
                 </TooltipTrigger>
                 <TooltipContent
                   side={isDesktop ? "bottom" : "top"}
                   sideOffset={8}
                 >
-                  <p>{label}</p>
+                  <p>{item.label}</p>
                 </TooltipContent>
               </Tooltip>
             </DockIcon>
           );
         })}
         <Separator orientation="vertical" className="h-full" />
-        {/* {Object.entries(siteConfig.social)
+        {/* {Object.entries(DATA.contact.social)
           .filter(([, social]) => social.navbar)
           .map(([name, social]) => (
             <DockIcon key={name}>
@@ -146,17 +131,17 @@ export default function Navbar({
               <ModeToggle />
             </TooltipTrigger>
             <TooltipContent side={isDesktop ? "bottom" : "top"} sideOffset={8}>
-              <p>{t("navbar.theme")}</p>
+              <p>Theme</p>
             </TooltipContent>
           </Tooltip>
         </DockIcon>
         <DockIcon>
           <Tooltip>
             <TooltipTrigger asChild>
-              <LanguageToggle disabled={languageToggleDisabled} />
+              <LanguageToggle />
             </TooltipTrigger>
             <TooltipContent side={isDesktop ? "bottom" : "top"} sideOffset={8}>
-              <p>{t("navbar.language")}</p>
+              <p>Language</p>
             </TooltipContent>
           </Tooltip>
         </DockIcon>
