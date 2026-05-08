@@ -3,6 +3,8 @@ import matter from "gray-matter";
 import path from "path";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import rehypeStringify from "rehype-stringify";
 import remarkGfm from "remark-gfm";
@@ -12,6 +14,28 @@ import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 
 const MATH_UNICODE_REPLACEMENTS: Array<[RegExp, string]> = [[/𝜇/gu, "\\mu"]];
+const BLOG_HTML_SANITIZE_SCHEMA = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames ?? []), "iframe"],
+  attributes: {
+    ...(defaultSchema.attributes ?? {}),
+    iframe: [
+      "src",
+      "title",
+      "width",
+      "height",
+      "allow",
+      "allowfullscreen",
+      "frameborder",
+      "referrerpolicy",
+      "loading",
+    ],
+  },
+  protocols: {
+    ...(defaultSchema.protocols ?? {}),
+    src: ["https"],
+  },
+};
 
 function getBlogContentDir(locale: string): string {
   const localeDir = locale === "zh" ? "zh" : "en";
@@ -48,7 +72,9 @@ export async function markdownToHTML(markdown: string) {
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkMath)
-    .use(remarkRehype)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeRaw)
+    .use(rehypeSanitize, BLOG_HTML_SANITIZE_SCHEMA)
     .use(rehypeSlug)
     .use(rehypeKatex, { strict: "ignore" })
     .use(rehypePrettyCode, {
