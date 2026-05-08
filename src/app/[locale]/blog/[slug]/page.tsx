@@ -46,7 +46,11 @@ export default async function Blog(props: {
     return null; // Layout will handle notFound()
   }
 
-  const readingTime = post.metadata.readingTime || 1;
+  const readingTime =
+    typeof post.metadata.readingTime === "number" &&
+    post.metadata.readingTime > 0
+      ? post.metadata.readingTime
+      : 1;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 sm:px-8 md:px-10">

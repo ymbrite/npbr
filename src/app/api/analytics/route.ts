@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Revalidate the analytics cache tags
-    revalidateTag("ga4-analytics");
+    revalidateTag("ga4-analytics", "max");
 
     return NextResponse.json({
       revalidated: true,

@@ -13,6 +13,11 @@ import { unified } from "unified";
 
 const MATH_UNICODE_REPLACEMENTS: Array<[RegExp, string]> = [[/𝜇/gu, "\\mu"]];
 
+function getBlogContentDir(locale: string): string {
+  const localeDir = locale === "zh" ? "zh" : "en";
+  return path.join(process.cwd(), "content", "blog", localeDir);
+}
+
 // Define the expected metadata structure
 interface BlogPostMetadata {
   title: string;
@@ -64,8 +69,7 @@ export async function getPost(
   slug: string,
   locale: string = "en",
 ): Promise<BlogPost | null> {
-  const contentDir = locale === "zh" ? "content/zh" : "content";
-  const filePath = path.join(contentDir, `${slug}.mdx`);
+  const filePath = path.join(getBlogContentDir(locale), `${slug}.mdx`);
 
   // Check if file exists
   if (!fs.existsSync(filePath)) {
@@ -113,16 +117,31 @@ async function getAllPosts(
 }
 
 export async function getBlogPosts(locale: string = "en"): Promise<BlogPost[]> {
-  const contentDir = locale === "zh" ? "content/zh" : "content";
-  return getAllPosts(path.join(process.cwd(), contentDir), locale);
+  return getAllPosts(getBlogContentDir(locale), locale);
 }
 
 export async function hasChineseVersion(slug: string): Promise<boolean> {
-  const chineseFilePath = path.join("content/zh", `${slug}.mdx`);
+  const chineseFilePath = path.join(getBlogContentDir("zh"), `${slug}.mdx`);
   return fs.existsSync(chineseFilePath);
 }
 
 export async function hasEnglishVersion(slug: string): Promise<boolean> {
-  const englishFilePath = path.join("content", `${slug}.mdx`);
+  const englishFilePath = path.join(getBlogContentDir("en"), `${slug}.mdx`);
   return fs.existsSync(englishFilePath);
+}
+
+export async function getAvailableLocales(
+  slug: string,
+  locales: string[],
+): Promise<string[]> {
+  const availableLocales: string[] = [];
+
+  for (const locale of locales) {
+    const filePath = path.join(getBlogContentDir(locale), `${slug}.mdx`);
+    if (fs.existsSync(filePath)) {
+      availableLocales.push(locale);
+    }
+  }
+
+  return availableLocales;
 }
