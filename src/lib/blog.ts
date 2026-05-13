@@ -1,6 +1,8 @@
 import fs from "fs";
 import matter from "gray-matter";
 import path from "path";
+
+import { siteConfig } from "@/data/site";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeRaw from "rehype-raw";
@@ -144,6 +146,46 @@ async function getAllPosts(
 
 export async function getBlogPosts(locale: string = "en"): Promise<BlogPost[]> {
   return getAllPosts(getBlogContentDir(locale), locale);
+}
+
+export interface PaginatedBlogPosts {
+  posts: BlogPost[];
+  currentPage: number;
+  totalPages: number;
+  totalPosts: number;
+  postsPerPage: number;
+}
+
+/* Sort posts in descending order by date (newest first) */
+export function sortPostsByDate(posts: BlogPost[]): BlogPost[] {
+  return [...posts].sort(
+    (a, b) =>
+      new Date(b.metadata.date).getTime() - new Date(a.metadata.date).getTime(),
+  );
+}
+
+/*
+ * Get a paginated slice of blog posts for the given locale and page.
+ * `currentPage` is 1-indexed; pages out of range yield an empty `posts` array.
+ */
+export async function getPaginatedBlogPosts(
+  locale: string,
+  currentPage: number,
+): Promise<PaginatedBlogPosts> {
+  const postsPerPage = siteConfig.blog.postsPerPage;
+  const allPosts = sortPostsByDate(await getBlogPosts(locale));
+  const totalPosts = allPosts.length;
+  const totalPages = Math.max(1, Math.ceil(totalPosts / postsPerPage));
+  const start = (currentPage - 1) * postsPerPage;
+  const posts = allPosts.slice(start, start + postsPerPage);
+
+  return {
+    posts,
+    currentPage,
+    totalPages,
+    totalPosts,
+    postsPerPage,
+  };
 }
 
 export async function hasChineseVersion(slug: string): Promise<boolean> {

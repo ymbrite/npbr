@@ -67,6 +67,13 @@
             "toggle": "Toggle table of contents",
             "close": "Close table of contents",
             "empty": "No table of contents available"
+        },
+        "pagination": {
+            "previous": "Previous",
+            "next": "Next",
+            "pageInfo": "Page {current} of {total}",
+            "previousLabel": "Go to previous page",
+            "nextLabel": "Go to next page"
         }
     },
     "footer": {

@@ -67,6 +67,13 @@
             "toggle": "切换目录",
             "close": "关闭目录",
             "empty": "暂无目录"
+        },
+        "pagination": {
+            "previous": "上一页",
+            "next": "下一页",
+            "pageInfo": "第 {current} 页 / 共 {total} 页",
+            "previousLabel": "前往上一页",
+            "nextLabel": "前往下一页"
         }
     },
     "footer": {
