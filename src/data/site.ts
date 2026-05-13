@@ -11,6 +11,6 @@ export const siteConfig = {
   avatarUrl: "/me.png",
   blog: {
     /* Number of posts per page on the blog list */
-    postsPerPage: 6,
+    postsPerPage: 5,
   },
 } as const;
