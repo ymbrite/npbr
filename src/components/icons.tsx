@@ -3,6 +3,7 @@ import {
   BookIcon,
   BookOpenIcon,
   ChartCandlestickIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   EyeIcon,
   FileTextIcon,
@@ -23,6 +24,7 @@ export type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
   book: (props: IconProps) => <BookIcon {...props} />,
+  chevronleft: (props: IconProps) => <ChevronLeftIcon {...props} />,
   chevronright: (props: IconProps) => <ChevronRightIcon {...props} />,
   email: (props: IconProps) => <MailIcon {...props} />,
   eye: (props: IconProps) => <EyeIcon {...props} />,

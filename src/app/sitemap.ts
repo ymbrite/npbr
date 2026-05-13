@@ -5,6 +5,11 @@ import { DEFAULT_LOCALE, LOCALES } from "@/i18n/routing";
 import { getBlogPosts } from "@/lib/blog";
 
 const siteUrl = siteConfig.url;
+const postsPerPage = siteConfig.blog.postsPerPage;
+
+function localePathPrefix(locale: string): string {
+  return locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+}
 
 type ChangeFrequency =
   | "always"
@@ -32,37 +37,48 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const allBlogSitemapEntries: MetadataRoute.Sitemap = [];
+  const blogPaginationEntries: MetadataRoute.Sitemap = [];
 
   for (const locale of LOCALES) {
     const posts = await getBlogPosts(locale);
-    posts
-      .filter(
-        (post) =>
-          post.slug &&
-          (post.metadata.status !== "draft" || !post.metadata.status),
-      )
-      .forEach((post) => {
-        const slugPart = post.slug.replace(/^\//, "").replace(/^blogs\//, "");
-        if (slugPart) {
-          allBlogSitemapEntries.push({
-            url: `${siteUrl}${
-              locale === DEFAULT_LOCALE ? "" : `/${locale}`
-            }/blog/${slugPart}`,
-            lastModified: post.metadata.updatedAt
-              ? new Date(post.metadata.updatedAt as string)
-              : post.metadata.date
-                ? new Date(post.metadata.date)
-                : new Date(),
-            changeFrequency: "monthly" as ChangeFrequency,
-            priority: 0.7,
-          });
-        }
+    const visiblePosts = posts.filter(
+      (post) =>
+        post.slug && (post.metadata.status !== "draft" || !post.metadata.status),
+    );
+
+    visiblePosts.forEach((post) => {
+      const slugPart = post.slug.replace(/^\//, "").replace(/^blogs\//, "");
+      if (slugPart) {
+        allBlogSitemapEntries.push({
+          url: `${siteUrl}${localePathPrefix(locale)}/blog/${slugPart}`,
+          lastModified: post.metadata.updatedAt
+            ? new Date(post.metadata.updatedAt as string)
+            : post.metadata.date
+              ? new Date(post.metadata.date)
+              : new Date(),
+          changeFrequency: "monthly" as ChangeFrequency,
+          priority: 0.7,
+        });
+      }
+    });
+
+    const totalPages = Math.max(
+      1,
+      Math.ceil(visiblePosts.length / postsPerPage),
+    );
+    for (let page = 2; page <= totalPages; page++) {
+      blogPaginationEntries.push({
+        url: `${siteUrl}${localePathPrefix(locale)}/blog/page/${page}`,
+        lastModified: new Date(),
+        changeFrequency: "weekly" as ChangeFrequency,
+        priority: 0.6,
       });
+    }
   }
 
   const uniqueBlogPostEntries = Array.from(
     new Map(allBlogSitemapEntries.map((entry) => [entry.url, entry])).values(),
   );
 
-  return [...pages, ...uniqueBlogPostEntries];
+  return [...pages, ...blogPaginationEntries, ...uniqueBlogPostEntries];
 }
